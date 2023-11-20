@@ -340,7 +340,11 @@ sudo systemctl restart nut-monitor
 sudo upsdrvctl stop
 sudo upsdrvctl start
 ```
+Tail the syslog file.
+```
+tail /var/log/syslog
 
+```
 Enjoy. 
 
 
