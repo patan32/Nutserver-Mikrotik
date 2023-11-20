@@ -1,9 +1,6 @@
 # Nutserver-Mikrotik
 How to turn off the Mikrotik router from the Raspberry Pi if the battery level state is low.
 
-You should follow this guide since it's the best and he tells you how to get everything going.
-https://technotim.live/posts/NUT-server-guide/
-
 First run the ```lsusb``` command. It will allow you to find out what device is connected through the USB port.
 
 Then perform the below command to update repositories:
