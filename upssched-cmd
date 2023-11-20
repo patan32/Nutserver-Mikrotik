@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# This script should be called by upssched via the CMDSCRIPT directive.
+#
+# This script may be replaced with another program without harm.
+#
+# The first argument passed to your CMDSCRIPT is the name of the timer
+# from your AT lines.
+#
+# N.B. The $NOTIFYTYPE can be misleading so best to stick to AT event names
+
+ case $1 in
+       onbatt)
+          logger -t upssched-cmd "UPS running on battery"
+          ;;
+       mikrotik)
+          logger -t upssched-cmd "Shutting down Mikrotik"
+          bash /etc/nut/mikrotik.sh
+          ;;
+       online)
+          logger -t upssched-cmd "The UPS is back on power"
+          ;;
+       commbad)
+       logger -t upssched-cmd "The server lost communication with UPS"
+          ;;
+       commok)
+          logger -t upssched-cmd "The server re-establish communication with UPS"
+          ;;
+       earlyshutdown)
+          logger -t upssched-cmd "UPS on battery too long, early shutdown"
+          /usr/sbin/upsmon -c fsd
+          ;;
+       shutdowncritical)
+          logger -t upssched-cmd "UPS on battery critical, forced shutdown"
+          /usr/sbin/upsmon -c fsd
+          ;;
+       upsgone)
+          logger -t upssched-cmd "UPS has been gone too long, can't reach"
+          ;;
+       replacebatt)
+          logger -t upssched-cmd "The UPS needs new battery"
+          ;;
+       *)
+          logger -t upssched-cmd "Unrecognized command: $1"
+          ;;
+ esac
