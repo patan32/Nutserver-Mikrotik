@@ -342,6 +342,112 @@ Tail the syslog file.
 tail /var/log/syslog
 
 ```
+Let's set up notification. I want to get a email when UPS losses power. I'll be using msmtp package. To install run
+```
+sudo apt-get install msmtp msmtp-mta mailutils
+```
+Create a file called msmtprc in /etc/
+```
+nano /etc/msmtprc
+```
+I will be using Office 365 for this. You can change few bits to use Outlook or gmail. Google and find the right info. 
+```
+account          default
+host             smtp.office365.com
+port             587
+tls              on
+tls_starttls     on
+auth             on
+user             ups@domain.com
+password         password
+from             ups@domain.com
+logfile          /var/log/msmtp
+
+```
+The log file will fail so run this commands.
+```
+groups msmtp
+sudo touch /var/log/msmtp
+sudo chown msmtp:msmtp /var/log/msmtp
+sudo chmod 660 /var/log/msmtp
+```
+Let's test if email works. Run this replacing your email address.
+```
+echo "Subject: Test from the nut-server" | msmtp recipient@domain.com
+```
+If everything works we can do the next part in NUT config.
+
+Edit your upsmon.conf under /etc/nut and add ```NOTIFYCMD "/etc/nut/notifycmd.sh"```
+
+```nano /etc/nut/upsmon.conf```
+
+```
+RUN_AS_USER root
+
+MONITOR blazer@localhost 1 upsmon password master
+
+MINSUPPLIES 1
+SHUTDOWNCMD "/sbin/shutdown -h +0"
+NOTIFYCMD /usr/sbin/upssched
+POLLFREQ 2
+POLLFREQALERT 1
+HOSTSYNC 15
+DEADTIME 15
+POWERDOWNFLAG /etc/killpower
+
+NOTIFYMSG ONLINE    "UPS %s on line power"
+NOTIFYMSG ONBATT    "UPS %s on battery"
+NOTIFYMSG LOWBATT   "UPS %s battery is low"
+NOTIFYMSG FSD       "UPS %s: forced shutdown in progress"
+NOTIFYMSG COMMOK    "Communications with UPS %s established"
+NOTIFYMSG COMMBAD   "Communications with UPS %s lost"
+NOTIFYMSG SHUTDOWN  "Auto logout and shutdown proceeding"
+NOTIFYMSG REPLBATT  "UPS %s battery needs to be replaced"
+NOTIFYMSG NOCOMM    "UPS %s is unavailable"
+NOTIFYMSG NOPARENT  "upsmon parent process died - shutdown impossible"
+
+# Email script for NOTIFYCMD
+NOTIFYCMD "/etc/nut/notifycmd.sh"
+
+NOTIFYFLAG ONLINE   SYSLOG+WALL+EXEC
+NOTIFYFLAG ONBATT   SYSLOG+WALL+EXEC
+NOTIFYFLAG LOWBATT  SYSLOG+WALL
+NOTIFYFLAG FSD      SYSLOG+WALL+EXEC
+NOTIFYFLAG COMMOK   SYSLOG+WALL+EXEC
+NOTIFYFLAG COMMBAD  SYSLOG+WALL+EXEC
+NOTIFYFLAG SHUTDOWN SYSLOG+WALL+EXEC
+NOTIFYFLAG REPLBATT SYSLOG+WALL
+NOTIFYFLAG NOCOMM   SYSLOG+WALL+EXEC
+NOTIFYFLAG NOPARENT SYSLOG+WALL
+
+RBWARNTIME 43200
+
+NOCOMMWARNTIME 600
+
+FINALDELAY 5
+```
+Let's createh file called notifycmd.sh under /etc/nut/. 
+```
+nano /etc/nut/notifycmd.sh
+```
+Add this to the file. change the ups@domain.com to your proper email.
+```
+#!/bin/bash
+EMAIL='ups@domain.com'
+echo -e "Subject: UPS ALERT: $NOTIFYTYPE\n\nUPS: $UPSNAME\r\nAlert type: $NOTIFYTYPE\n\n\nUPS: Blazer Room UPS" | msmtp $EMAIL
+```
+Change the group and add execution to the file notifycmd.sh. Once done, restart NUT. Test by switching off the power and you should get emails about it. 
+
+```
+# Change group to nut
+sudo chown :nut /etc/nut/notifycmd.sh
+# Add execution
+sudo chmod 774 /etc/nut/notifycmd.sh
+# Restart the NUT services
+sudo systemctl restart nut-server.service
+sudo systemctl restart nut-driver.service
+sudo systemctl restart nut-monitor.service
+```
 Enjoy. 
 
 
