@@ -411,12 +411,12 @@ NOTIFYCMD "/etc/nut/notifycmd.sh"
 
 NOTIFYFLAG ONLINE   SYSLOG+WALL+EXEC
 NOTIFYFLAG ONBATT   SYSLOG+WALL+EXEC
-NOTIFYFLAG LOWBATT  SYSLOG+WALL
+NOTIFYFLAG LOWBATT  SYSLOG+WALL+EXEC
 NOTIFYFLAG FSD      SYSLOG+WALL+EXEC
 NOTIFYFLAG COMMOK   SYSLOG+WALL+EXEC
 NOTIFYFLAG COMMBAD  SYSLOG+WALL+EXEC
 NOTIFYFLAG SHUTDOWN SYSLOG+WALL+EXEC
-NOTIFYFLAG REPLBATT SYSLOG+WALL
+NOTIFYFLAG REPLBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG NOCOMM   SYSLOG+WALL+EXEC
 NOTIFYFLAG NOPARENT SYSLOG+WALL
 
@@ -426,11 +426,11 @@ NOCOMMWARNTIME 600
 
 FINALDELAY 5
 ```
-Let's createh file called notifycmd.sh under /etc/nut/. 
+Let's create file called notifycmd.sh under /etc/nut/. 
 ```
 nano /etc/nut/notifycmd.sh
 ```
-Add this to the file. change the ups@domain.com to your proper email.
+Add this to the file. Change the ups@domain.com to your proper email.
 ```
 #!/bin/bash
 EMAIL='ups@domain.com'
