@@ -342,7 +342,9 @@ Tail the syslog file.
 tail /var/log/syslog
 
 ```
-Let's set up notification. I want to get a email when UPS losses power. I'll be using msmtp package. To install run
+# Let's set up notification. 
+I want to get a email when UPS losses power. I'll be using msmtp package. To install run
+
 ```
 sudo apt-get install msmtp msmtp-mta mailutils
 ```
