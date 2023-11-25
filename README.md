@@ -342,7 +342,8 @@ Tail the syslog file.
 tail /var/log/syslog
 
 ```
-Let's set up notification. I want to get a email when UPS losses power. I'll be using msmtp package. To install run
+# Let's set up notification. 
+I want to get a email when UPS losses power. I'll be using msmtp package. To install run
 
 ```
 sudo apt-get install msmtp msmtp-mta mailutils
@@ -378,51 +379,32 @@ echo "Subject: Test from the nut-server" | msmtp recipient@domain.com
 ```
 If everything works we can do the next part in NUT config.
 
-Edit your upsmon.conf under /etc/nut and add ```NOTIFYCMD "/etc/nut/notifycmd.sh"```
+Edit your upssched.conf under /etc/nut and add the below.
 
-```nano /etc/nut/upsmon.conf```
+```nano /etc/nut/upssched.conf```
 
 ```
-RUN_AS_USER root
+CMDSCRIPT /etc/nut/upssched-cmd
+PIPEFN /etc/nut/upssched.pipe
+LOCKFN /etc/nut/upssched.lock
 
-MONITOR blazer@localhost 1 upsmon password master
-
-MINSUPPLIES 1
-SHUTDOWNCMD "/sbin/shutdown -h +0"
-NOTIFYCMD /usr/sbin/upssched
-POLLFREQ 2
-POLLFREQALERT 1
-HOSTSYNC 15
-DEADTIME 15
-POWERDOWNFLAG /etc/killpower
-
-NOTIFYMSG ONLINE    "UPS %s on line power"
-NOTIFYMSG ONBATT    "UPS %s on battery"
-NOTIFYMSG LOWBATT   "UPS %s battery is low"
-NOTIFYMSG FSD       "UPS %s: forced shutdown in progress"
-NOTIFYMSG COMMOK    "Communications with UPS %s established"
-NOTIFYMSG COMMBAD   "Communications with UPS %s lost"
-NOTIFYMSG SHUTDOWN  "Auto logout and shutdown proceeding"
-NOTIFYMSG REPLBATT  "UPS %s battery needs to be replaced"
-NOTIFYMSG NOCOMM    "UPS %s is unavailable"
-NOTIFYMSG NOPARENT  "upsmon parent process died - shutdown impossible"
-
-NOTIFYFLAG ONLINE   SYSLOG+WALL+EXEC
-NOTIFYFLAG ONBATT   SYSLOG+WALL+EXEC
-NOTIFYFLAG LOWBATT  SYSLOG+WALL+EXEC
-NOTIFYFLAG FSD      SYSLOG+WALL+EXEC
-NOTIFYFLAG COMMOK   SYSLOG+WALL+EXEC
-NOTIFYFLAG COMMBAD  SYSLOG+WALL+EXEC
-NOTIFYFLAG SHUTDOWN SYSLOG+WALL+EXEC
-NOTIFYFLAG REPLBATT SYSLOG+WALL+EXEC
-NOTIFYFLAG NOCOMM   SYSLOG+WALL+EXEC
-NOTIFYFLAG NOPARENT SYSLOG+WALL
-
-RBWARNTIME 43200
-
-NOCOMMWARNTIME 600
-
-FINALDELAY 5
+AT ONLINE * EXECUTE notifyonline
+AT ONBATT * EXECUTE notifyoffline
+AT ONLINE * EXECUTE online
+AT ONBATT * START-TIMER onbatt 30
+AT ONLINE * CANCEL-TIMER onbatt online
+AT ONBATT * START-TIMER mikrotik 50
+AT ONLINE * CANCEL-TIMER mikrotik online
+AT ONBATT * START-TIMER earlyshutdown 60
+AT ONLINE * CANCEL-TIMER earlyshutdown
+AT LOWBATT * START-TIMER shutdowncritical 300
+AT ONLINE * CANCEL-TIMER shutdowncritical
+AT LOWBATT * EXECUTE onbatt
+AT COMMBAD * START-TIMER commbad 30
+AT COMMOK * CANCEL-TIMER commbad commok
+AT NOCOMM * EXECUTE commbad
+AT REPLBATT * EXECUTE replacebatt
+AT SHUTDOWN * EXECUTE powerdown
 ```
 Let's create file called notifycmd.sh under /etc/nut/. 
 ```
@@ -441,7 +423,75 @@ Change the group and add execution to the file notifycmd.sh. Once done, restart 
 sudo chown :nut /etc/nut/notifycmd.sh
 # Add execution
 sudo chmod 774 /etc/nut/notifycmd.sh
-# Restart the NUT services
+
+Edit file upssched-cmd under /etc/nut
+
+```nano /etc/nut/upssched-cmd```
+
+```
+```
+#!/bin/sh
+#
+# This script should be called by upssched via the CMDSCRIPT directive.
+#
+# This script may be replaced with another program without harm.
+#
+# The first argument passed to your CMDSCRIPT is the name of the timer
+# from your AT lines.
+#
+# N.B. The $NOTIFYTYPE can be misleading so best to stick to AT event names
+
+ case $1 in
+       notifyonline)
+          logger -t upssched-cmd "Notify UPS running online power"
+          bash /etc/nut/notifycmd.sh
+          ;;
+       notifyoffline)
+          logger -t upssched-cmd "Notify UPS running on battery"
+          bash /etc/nut/notifycmd.sh
+          ;;
+       onbatt)
+          logger -t upssched-cmd "UPS running on battery"
+          ;;
+       mikrotik)
+          logger -t upssched-cmd "Shutting down Mikrotik"
+          bash /etc/nut/mikrotik.sh
+          ;;
+       online)
+          logger -t upssched-cmd "The UPS is back on power"
+          ;;
+       commbad)
+       logger -t upssched-cmd "The server lost communication with UPS"
+          ;;
+       commok)
+          logger -t upssched-cmd "The server re-establish communication with UPS"
+          ;;
+       earlyshutdown)
+          logger -t upssched-cmd "UPS on battery too long, early shutdown"
+          /usr/sbin/upsmon -c fsd
+          ;;
+       shutdowncritical)
+          logger -t upssched-cmd "UPS on battery critical, forced shutdown"
+          /usr/sbin/upsmon -c fsd
+          ;;
+       upsgone)
+          logger -t upssched-cmd "UPS has been gone too long, can't reach"
+          ;;
+       replacebatt)
+          logger -t upssched-cmd "The UPS needs new battery"
+          ;;
+       powerdown)
+          logger -t upssched-cmd "Shutting down Machine"
+          bash /etc/nut/notifycmd.sh
+          ;;
+       *)
+          logger -t upssched-cmd "Unrecognized command: $1"
+          ;;
+ esac
+```
+
+Restart the NUT services
+```
 sudo systemctl restart nut-server.service
 sudo systemctl restart nut-driver.service
 sudo systemctl restart nut-monitor.service
