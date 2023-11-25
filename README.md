@@ -1,4 +1,4 @@
-# Nutserver-Mikrotik
+# Nutserver Mikrotik Shutdown with Notification
 How to turn off the Mikrotik router from the Raspberry Pi if the battery level state is low.
 
 First run the ```lsusb``` command. It will allow you to find out what device is connected through the USB port.
