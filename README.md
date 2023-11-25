@@ -415,7 +415,7 @@ Add this to the file. Change the ups@domain.com to your proper email.
 EMAIL='ups@domain.com'
 echo -e "Subject: UPS ALERT: $NOTIFYTYPE\n\nUPS: $UPSNAME\r\nAlert type: $NOTIFYTYPE\n\n\nUPS: Blazer Room UPS" | msmtp $EMAIL
 ```
-Change the group and add execution to the file notifycmd.sh. Once done, restart NUT. Test by switching off the power and you should get emails about it. 
+Change the group and add execution to the file notifycmd.sh.
 
 ```
 # Change group to nut
@@ -495,6 +495,8 @@ sudo systemctl restart nut-server.service
 sudo systemctl restart nut-driver.service
 sudo systemctl restart nut-monitor.service
 ```
+Test by switching off the power and you should get emails about it. 
+
 Enjoy. 
 
 
