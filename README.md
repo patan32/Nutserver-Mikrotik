@@ -407,9 +407,6 @@ NOTIFYMSG REPLBATT  "UPS %s battery needs to be replaced"
 NOTIFYMSG NOCOMM    "UPS %s is unavailable"
 NOTIFYMSG NOPARENT  "upsmon parent process died - shutdown impossible"
 
-# Email script for NOTIFYCMD
-NOTIFYCMD "/etc/nut/notifycmd.sh"
-
 NOTIFYFLAG ONLINE   SYSLOG+WALL+EXEC
 NOTIFYFLAG ONBATT   SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT  SYSLOG+WALL+EXEC
