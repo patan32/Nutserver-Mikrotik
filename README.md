@@ -368,7 +368,6 @@ logfile          /var/log/msmtp
 ```
 The log file will fail so run this commands.
 ```
-groups msmtp
 sudo touch /var/log/msmtp
 sudo chown msmtp:msmtp /var/log/msmtp
 sudo chmod 660 /var/log/msmtp
@@ -423,12 +422,12 @@ Change the group and add execution to the file notifycmd.sh. Once done, restart 
 sudo chown :nut /etc/nut/notifycmd.sh
 # Add execution
 sudo chmod 774 /etc/nut/notifycmd.sh
+```
 
 Edit file upssched-cmd under /etc/nut
 
 ```nano /etc/nut/upssched-cmd```
 
-```
 ```
 #!/bin/sh
 #
