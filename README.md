@@ -488,6 +488,11 @@ Edit file upssched-cmd under /etc/nut
           ;;
  esac
 ```
+Little permissions wrangling. You need to set up the various configuration files to be readable by the NUT components that use them, but not by other users. This prevents anyone from reading the password, and sending unauthorized commands to the server to shut everything down. It may be overkill for a simple home network, but it’s also really simple to do.
+```
+sudo chown nut:nut /etc/nut/*
+sudo chmod 640 /etc/nut/upsd.users /etc/nut/upsmon.conf
+```
 
 Restart the NUT services
 ```
